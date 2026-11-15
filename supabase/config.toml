@@ -1,0 +1,7 @@
+# Las funciones validan por su cuenta (clave de anfitrión y pase de LiveKit),
+# por eso no exigen sesión de Supabase.
+[functions.sala]
+verify_jwt = false
+
+[functions.moderar]
+verify_jwt = false

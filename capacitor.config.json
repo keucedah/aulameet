@@ -1,0 +1,6 @@
+{
+  "appId": "com.aulameet.app",
+  "appName": "AulaMeet",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" }
+}
