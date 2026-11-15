@@ -76,6 +76,15 @@ npm run dev
   (Las cuentas de usuario llegarán con la plataforma escolar.)
 - Una sala vacía se cierra a los 10 minutos; el anfitrión puede reabrirla con el mismo enlace.
 
+## Pizarra
+
+- El anfitrión la abre con el botón **Pizarra**; todos la ven en grande. Con **Todos dibujan** da permiso a los demás.
+- Herramientas: seleccionar y mover, puntero láser, lápiz, resaltador, borrador, línea, flecha, rectángulo,
+  elipse, triángulo, regla (segmento con medida y ángulo), escuadra (triángulo rectángulo con medidas),
+  compás (circunferencia con radio), texto, ecuaciones y gráficas de funciones.
+- Fondos: blanco, cuadrícula y plano cartesiano. Las medidas usan la unidad del plano.
+- Lo dibujado viaja directo entre los participantes y no se guarda al terminar la reunión.
+
 ## Ajustes rápidos
 
 - Nombre y colores: `vite.config.ts`, `index.html`, `src/estilos.css`.

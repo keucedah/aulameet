@@ -1,0 +1,62 @@
+.pz { height: 100%; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #0b1118; border-radius: 10px; overflow: hidden; }
+.pz-barra { background: var(--capa); border-bottom: 1px solid var(--borde); padding: .3rem .4rem; display: grid; gap: .3rem; }
+.pz-aviso { color: var(--tenue); font-size: .85rem; text-align: center; }
+.pz-fila { display: flex; align-items: center; gap: .2rem; overflow-x: auto; scrollbar-width: thin; }
+.pz-fila > * { flex: none; }
+.pz-boton {
+  min-width: 2.2rem; height: 2.2rem; display: grid; place-items: center; padding: 0 .4rem;
+  font: inherit; font-size: 1.05rem; color: var(--texto); background: var(--capa-2);
+  border: 1px solid var(--borde); border-radius: 7px; cursor: pointer;
+}
+.pz-boton.texto { font-size: .8rem; padding: 0 .6rem; }
+.pz-boton.activo { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+.separado { margin-left: .5rem; }
+.pz-color { width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 2px solid var(--capa); outline: 1px solid var(--borde); cursor: pointer; padding: 0; }
+.pz-color.activo { outline: 2px solid var(--acento); }
+.pz-punto { display: block; border-radius: 50%; background: currentColor; }
+.pz-opcion { display: flex; align-items: center; gap: .3rem; font-size: .8rem; color: var(--texto); white-space: nowrap; cursor: pointer; }
+.pz-opcion input { flex: none; }
+.pz-select { font: inherit; font-size: .8rem; color: var(--texto); background: var(--capa-2); border: 1px solid var(--borde); border-radius: 7px; height: 2.2rem; padding: 0 .4rem; }
+
+.pz-marco { flex: 1; min-height: 0; container-type: size; display: grid; place-items: center; padding: .3rem; }
+.pz-lienzo {
+  position: relative; width: min(100cqw, 100cqh * 16 / 9); aspect-ratio: 16 / 9;
+  background: #fff; border-radius: 4px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.pz-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.pz-cuadricula line { stroke: #dfe5ec; stroke-width: 1; }
+.pz-ejes line { stroke: #55606e; stroke-width: 2; }
+.pz-ejes polygon { fill: #55606e; }
+.pz-ejes text { font: 13px system-ui, sans-serif; fill: #55606e; }
+.pz-ejes .pz-eje-nombre { font-size: 18px; font-style: italic; }
+.pz-texto { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; white-space: pre; }
+.pz-medida { font: 600 17px system-ui, sans-serif; fill: #1b1f24; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+.pz-sel { filter: drop-shadow(0 0 3px #1570ef) drop-shadow(0 0 1px #1570ef); }
+
+.pz-ecu { position: absolute; line-height: 1.2; white-space: nowrap; padding: .1em .2em; border-radius: 4px; }
+.pz-ecu .katex-display { margin: 0; }
+.pz-ecu * { pointer-events: none; }
+.pz-ecu.pz-sel { outline: 2px dashed #1570ef; filter: none; }
+
+.pz-laser { transition: transform 70ms linear; }
+.pz-laser-halo { fill: rgba(240, 40, 40, .25); }
+.pz-laser-centro { fill: #f02828; stroke: #fff; stroke-width: 1.5; }
+.pz-laser text { font: 600 16px system-ui, sans-serif; fill: #c01818; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+
+.pz-dialogo {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(92%, 26rem); z-index: 3;
+  background: var(--capa); color: var(--texto); border: 1px solid var(--borde); border-radius: 12px;
+  padding: .9rem; display: grid; gap: .5rem; box-shadow: 0 12px 40px rgba(0, 0, 0, .45); cursor: default;
+}
+.pz-dialogo label { font-weight: 600; font-size: .9rem; }
+.pz-dialogo textarea, .pz-dialogo input {
+  font: inherit; color: inherit; background: var(--fondo); border: 1px solid var(--borde); border-radius: 8px;
+  padding: .5rem .6rem; width: 100%; resize: vertical;
+}
+.pz-plantillas { display: flex; flex-wrap: wrap; gap: .25rem; }
+.pz-plantillas button { font: inherit; font-size: .9rem; min-width: 2.2rem; height: 2rem; color: var(--texto); background: var(--capa-2); border: 1px solid var(--borde); border-radius: 6px; cursor: pointer; }
+.pz-vista { background: #fff; color: #1b1f24; border-radius: 8px; min-height: 3.2rem; padding: .4rem; display: grid; place-items: center; overflow-x: auto; }
+.pz-vista .katex-display { margin: 0; }
+.pz-vista .pz-vacio { color: #6b7684; font-size: .85rem; }
+.pz-ayuda { margin: 0; font-size: .8rem; color: var(--tenue); }
+.pz-dialogo-botones { display: flex; justify-content: flex-end; gap: .4rem; }

@@ -1,16 +1,26 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   CarouselLayout, DisconnectButton, FocusLayout, FocusLayoutContainer,
   GridLayout, LayoutContextProvider, MediaDeviceMenu, ParticipantTile, RoomAudioRenderer,
   TrackToggle, isTrackReference, useChat, useConnectionState, useDataChannel, useLocalParticipant, useParticipants,
   usePinnedTracks, useRoomContext, useRoomInfo, useTracks,
 } from "@livekit/components-react";
-import { ConnectionState, RoomEvent, Track, type LocalVideoTrack, type Participant } from "livekit-client";
+import { ConnectionState, RoomEvent, Track, VideoPresets, type LocalVideoTrack, type Participant } from "livekit-client";
 import {
   BackgroundProcessor, supportsBackgroundProcessors, type BackgroundProcessorWrapper,
 } from "@livekit/track-processors";
 import { enlaceDeSala, llamar } from "./api";
 import { fondos, type Fondo } from "./fondos";
+import { usePizarra } from "./pizarra/estado";
+
+// La pizarra (y el motor de ecuaciones) se descarga la primera vez que se abre.
+const Pizarra = lazy(() => import("./pizarra/Pizarra"));
+
+// Con filtro activo la cámara baja a 360p y 20 cuadros: separar a la persona del fondo
+// es lo más pesado de la app y a 720p traba los equipos modestos.
+const CAMARA_CON_FILTRO = { resolution: { width: 640, height: 360, frameRate: 20 } };
+const CAMARA_NORMAL = { resolution: VideoPresets.h720.resolution };
+const LIMITE_MS = 45; // por encima de esto el filtro no alcanza ni 20 cuadros por segundo
 
 type Panel = "chat" | "gente" | "fondos" | null;
 type Flotante = { id: number; emoji: string; nombre: string; x: number };
@@ -56,6 +66,9 @@ function Contenido({ sala, token }: { sala: string; token: string }) {
   const { localParticipant, cameraTrack } = useLocalParticipant();
   const { metadata } = useRoomInfo();
   const soyAnfitrion = esAnfitrion(localParticipant);
+  const pizarra = usePizarra(useRoomContext());
+  const [pizarraOculta, setPizarraOculta] = useState(false);
+  const verPizarra = pizarra.config.abierta && !pizarraOculta;
   const manoArriba = Boolean(localParticipant.attributes?.mano);
 
   const conexion = useConnectionState();
@@ -142,19 +155,42 @@ function Contenido({ sala, token }: { sala: string; token: string }) {
   const pistaCamara = cameraTrack?.track as LocalVideoTrack | undefined;
   const hayFiltros = useMemo(() => supportsBackgroundProcessors(), []);
 
+  const medidas = useRef({ suma: 0, n: 0 });
+
   useEffect(() => {
     if (!pistaCamara || !hayFiltros) return;
     const elegido = fondos().find((f) => f.id === fondo) ?? fondos()[0];
     let cancelado = false;
     (async () => {
       try {
+        const activo = pistaCamara.getProcessor();
         if (elegido.opciones.mode === "disabled") {
-          if (pistaCamara.getProcessor()) await pistaCamara.stopProcessor();
+          if (!activo) return;
+          await pistaCamara.stopProcessor();
           procesador.current = null;
-        } else if (procesador.current && pistaCamara.getProcessor() === procesador.current) {
+          await pistaCamara.restartTrack({ ...CAMARA_NORMAL, deviceId: await pistaCamara.getDeviceId() });
+        } else if (procesador.current && activo === procesador.current) {
           await procesador.current.switchTo(elegido.opciones);
         } else {
-          const nuevo = BackgroundProcessor(elegido.opciones);
+          await pistaCamara.restartTrack({ ...CAMARA_CON_FILTRO, deviceId: await pistaCamara.getDeviceId() });
+          medidas.current = { suma: 0, n: 0 };
+          const nuevo = BackgroundProcessor({
+            ...elegido.opciones,
+            maxFps: 20,
+            segmenterOptions: { delegate: "GPU" },
+            // Si el equipo no da abasto, el filtro se apaga solo en vez de trabar la clase.
+            onFrameProcessed: (e) => {
+              const m = medidas.current;
+              m.suma += e.processingTimeMs;
+              if (++m.n < 90) return;
+              const promedio = m.suma / m.n;
+              medidas.current = { suma: 0, n: 0 };
+              if (promedio > LIMITE_MS) {
+                avisar("El filtro era muy pesado para este dispositivo y se desactivó");
+                setFondo("ninguno");
+              }
+            },
+          });
           await pistaCamara.setProcessor(nuevo);
           procesador.current = nuevo;
         }
@@ -216,7 +252,14 @@ function Contenido({ sala, token }: { sala: string; token: string }) {
 
       <div className="sala-cuerpo">
         <div className="sala-video">
-          {enfoque ? (
+          {verPizarra ? (
+            <FocusLayoutContainer>
+              <CarouselLayout tracks={pistas}><ParticipantTile /></CarouselLayout>
+              <Suspense fallback={<div className="centro tenue">Abriendo la pizarra…</div>}>
+                <Pizarra almacen={pizarra} />
+              </Suspense>
+            </FocusLayoutContainer>
+          ) : enfoque ? (
             <FocusLayoutContainer>
               <CarouselLayout tracks={resto}><ParticipantTile /></CarouselLayout>
               <FocusLayout trackRef={enfoque} />
@@ -348,14 +391,40 @@ function Contenido({ sala, token }: { sala: string; token: string }) {
           </TrackToggle>
           <div className="lk-button-group-menu"><MediaDeviceMenu kind="videoinput" /></div>
         </div>
-        {puedeCompartir && (
+        {puedeCompartir ? (
           <TrackToggle
             source={Track.Source.ScreenShare}
             captureOptions={{ audio: true, selfBrowserSurface: "include" }}
             onDeviceError={() => avisar("No se pudo compartir la pantalla")}
+            title="Compartir pantalla, ventana o pestaña"
           >
-            <span className="rotulo">Compartir</span>
+            <span className="rotulo">Compartir pantalla</span>
           </TrackToggle>
+        ) : (
+          <button
+            className="lk-button"
+            title="Compartir pantalla"
+            onClick={() => avisar("Este navegador no permite compartir pantalla. Entra desde una computadora para hacerlo.")}
+          >
+            🖥️<span className="rotulo">Compartir pantalla</span>
+          </button>
+        )}
+        {(soyAnfitrion || pizarra.config.abierta) && (
+          <button
+            className="lk-button"
+            aria-pressed={verPizarra}
+            title={soyAnfitrion ? "Abrir o cerrar la pizarra para todos" : "Mostrar u ocultar la pizarra"}
+            onClick={() => {
+              if (soyAnfitrion) {
+                setPizarraOculta(false);
+                pizarra.abrir(!pizarra.config.abierta);
+              } else {
+                setPizarraOculta((o) => !o);
+              }
+            }}
+          >
+            🖊️<span className="rotulo">Pizarra</span>
+          </button>
         )}
         <button className="lk-button" aria-pressed={manoArriba} onClick={() => moderar("mano", { valor: !manoArriba })}>
           ✋<span className="rotulo">{manoArriba ? "Bajar mano" : "Mano"}</span>
