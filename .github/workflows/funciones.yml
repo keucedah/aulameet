@@ -1,1 +1,22 @@
 
+name: Publicar funciones
+
+on:
+  push:
+    branches: [main]
+    paths: ["supabase/**"]
+  workflow_dispatch:
+
+jobs:
+  funciones:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROYECTO: ${{ vars.SUPABASE_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase functions deploy sala --no-verify-jwt --project-ref "$PROYECTO"
+      - run: supabase functions deploy moderar --no-verify-jwt --project-ref "$PROYECTO"
