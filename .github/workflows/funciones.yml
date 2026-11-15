@@ -1,4 +1,3 @@
-
 name: Publicar funciones
 
 on:
@@ -18,5 +17,5 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-      - run: supabase functions deploy sala --no-verify-jwt --project-ref "$PROYECTO"
-      - run: supabase functions deploy moderar --no-verify-jwt --project-ref "$PROYECTO"
+      - run: supabase functions deploy sala --no-verify-jwt --yes --project-ref "$PROYECTO"
+      - run: supabase functions deploy moderar --no-verify-jwt --yes --project-ref "$PROYECTO"
